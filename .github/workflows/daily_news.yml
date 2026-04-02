@@ -1,0 +1,32 @@
+name: 每日早报推送
+
+on:
+  schedule:
+    # 定时任务：每天北京时间早上 8:00 运行
+    # (GitHub 服务器用的是 UTC 时间，所以这里写 0 点，加上 8 小时时差正好是北京的早 8 点)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 这个配置非常关键！它允许我们在网页上手动点击运行，方便测试
+
+jobs:
+  push-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 下载代码
+        uses: actions/checkout@v4
+
+      - name: 🐍 配置 Python 环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 📦 安装必要的第三方库
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: 🚀 运行新闻抓取与推送脚本
+        env:
+          # 把安全保险柜里的钥匙拿出来，交给 Python 脚本使用
+          WXPUSHER_APP_TOKEN: ${{ secrets.WXPUSHER_APP_TOKEN }}
+          WXPUSHER_UID: ${{ secrets.WXPUSHER_UID }}
+        run: python news.py
